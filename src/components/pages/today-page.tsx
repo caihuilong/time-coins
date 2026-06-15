@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Check, Layers3, X } from "lucide-react";
+import { BatchCoinEditor } from "@/components/batch-coin-editor";
+import { Button } from "@/components/ui/button";
 import { CoinEditor } from "@/components/coin-editor";
 import { DateNavigator } from "@/components/date-navigator";
 import { CATEGORY_META } from "@/lib/constants";
@@ -16,11 +18,23 @@ export function TodayPage({
   date: string;
   onDateChange: (date: string) => void;
 }) {
-  const { getRecord, updateCoin } = useTimeCoins();
+  const { getRecord, updateCoin, updateCoins } = useTimeCoins();
   const [selectedCoin, setSelectedCoin] = useState<TimeCoin | null>(null);
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [batchEditorOpen, setBatchEditorOpen] = useState(false);
   const record = getRecord(date);
   const filled = record.coins.filter((coin) => coin.category !== "empty").length;
   const percent = Math.round((filled / Math.max(record.coins.length, 1)) * 100);
+  const selectedCoins = record.coins.filter((coin) =>
+    selectedIds.includes(coin.id),
+  );
+
+  const leaveBatchMode = () => {
+    setBatchMode(false);
+    setSelectedIds([]);
+    setBatchEditorOpen(false);
+  };
 
   const encouragement = useMemo(() => {
     if (filled === 0) return "从记住一枚金币开始";
@@ -39,29 +53,79 @@ export function TodayPage({
             </p>
             <h1 className="text-2xl font-bold tracking-tight">今日时间金币</h1>
           </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-quality/70 shadow-coin">
-            <Sparkles className="h-4 w-4 text-amber-800" />
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (batchMode) {
+                leaveBatchMode();
+              } else {
+                setBatchMode(true);
+              }
+            }}
+            className={cn(
+              "flex h-9 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold shadow-coin",
+              batchMode
+                ? "bg-foreground text-white"
+                : "bg-quality/70 text-amber-900",
+            )}
+          >
+            {batchMode ? (
+              <>
+                <X className="h-3.5 w-3.5" />
+                取消
+              </>
+            ) : (
+              <>
+                <Layers3 className="h-3.5 w-3.5" />
+                多选
+              </>
+            )}
+          </button>
         </div>
         <p className="mt-0.5 text-xs text-stone-500">{encouragement}</p>
       </header>
 
-      <DateNavigator value={date} onChange={onDateChange} />
+      <DateNavigator
+        value={date}
+        onChange={(nextDate) => {
+          leaveBatchMode();
+          onDateChange(nextDate);
+        }}
+      />
 
-      <div className="my-2 rounded-2xl bg-white/70 px-3 py-2 shadow-sm ring-1 ring-white">
-        <div className="mb-1 flex items-center justify-between text-xs">
-          <span className="font-semibold">今日进度</span>
-          <span className="text-stone-500">
-            {filled} / {record.coins.length} coins
-          </span>
+      {batchMode ? (
+        <div className="my-2 flex h-[43px] items-center justify-between rounded-2xl bg-foreground px-3 text-white shadow-sm">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 font-bold">
+              {selectedIds.length}
+            </span>
+            <span>{selectedIds.length ? "已选择时间段" : "点击金币进行多选"}</span>
+          </div>
+          <Button
+            size="sm"
+            disabled={!selectedIds.length}
+            onClick={() => setBatchEditorOpen(true)}
+            className="h-8 rounded-xl bg-white px-3 text-xs text-foreground hover:bg-stone-100"
+          >
+            统一填写
+          </Button>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-stone-200/80">
-          <div
-            className="h-full rounded-full bg-amber-400 transition-all duration-500"
-            style={{ width: `${percent}%` }}
-          />
+      ) : (
+        <div className="my-2 rounded-2xl bg-white/70 px-3 py-2 shadow-sm ring-1 ring-white">
+          <div className="mb-1 flex items-center justify-between text-xs">
+            <span className="font-semibold">今日进度</span>
+            <span className="text-stone-500">
+              {filled} / {record.coins.length} coins
+            </span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-stone-200/80">
+            <div
+              className="h-full rounded-full bg-amber-400 transition-all duration-500"
+              style={{ width: `${percent}%` }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid flex-1 auto-rows-fr grid-cols-5 gap-1.5">
         {record.coins.map((coin) => {
@@ -70,14 +134,27 @@ export function TodayPage({
           const summary = [...(coin.tags ?? []), coin.note]
             .filter(Boolean)
             .join(" · ");
+          const selected = selectedIds.includes(coin.id);
           return (
             <button
               key={coin.id}
               type="button"
-              onClick={() => setSelectedCoin(coin)}
+              onClick={() => {
+                if (batchMode) {
+                  setSelectedIds((current) =>
+                    current.includes(coin.id)
+                      ? current.filter((id) => id !== coin.id)
+                      : [...current, coin.id],
+                  );
+                } else {
+                  setSelectedCoin(coin);
+                }
+              }}
               className={cn(
                 "relative flex min-h-0 min-w-0 flex-col items-center justify-center overflow-hidden rounded-xl border border-white/70 px-1 py-1 shadow-coin transition active:scale-95",
                 coin.category === "empty" && "bg-empty/80",
+                batchMode && "opacity-65",
+                selected && "z-10 opacity-100 ring-2 ring-stone-800 ring-offset-1",
               )}
               style={meta ? { backgroundColor: meta.color } : undefined}
               aria-label={`${coin.startTime} ${meta?.label ?? "未记录"}`}
@@ -88,6 +165,11 @@ export function TodayPage({
               <span className="mt-1 line-clamp-2 w-full break-all text-center text-[9px] font-medium leading-[11px] text-stone-700/80">
                 {summary || meta?.shortLabel || "未记录"}
               </span>
+              {selected && (
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-foreground text-white">
+                  <Check className="h-2.5 w-2.5" />
+                </span>
+              )}
             </button>
           );
         })}
@@ -98,6 +180,15 @@ export function TodayPage({
         open={Boolean(selectedCoin)}
         onOpenChange={(open) => !open && setSelectedCoin(null)}
         onSave={(coin) => updateCoin(date, coin)}
+      />
+      <BatchCoinEditor
+        coins={selectedCoins}
+        open={batchEditorOpen}
+        onOpenChange={setBatchEditorOpen}
+        onSave={(values) => {
+          updateCoins(date, selectedIds, values);
+          leaveBatchMode();
+        }}
       />
     </section>
   );

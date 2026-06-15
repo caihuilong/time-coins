@@ -31,6 +31,7 @@ type TimeCoinsStore = {
   mission: MissionStatement;
   getRecord: (date: string) => DayRecord;
   updateCoin: (date: string, coin: TimeCoin) => void;
+  updateCoins: (date: string, coinIds: string[], values: Partial<TimeCoin>) => void;
   updateSettings: (settings: Settings) => void;
   updateMission: (content: string) => void;
   saveRole: (role: Role) => void;
@@ -118,6 +119,34 @@ export function TimeCoinsProvider({ children }: { children: ReactNode }) {
     [settings],
   );
 
+  const updateCoins = useCallback(
+    (date: string, coinIds: string[], values: Partial<TimeCoin>) => {
+      const selectedIds = new Set(coinIds);
+      setRecords((current) => {
+        const record = current[date] ?? createDayRecord(date, settings);
+        const next = {
+          ...current,
+          [date]: {
+            ...record,
+            coins: record.coins.map((coin) =>
+              selectedIds.has(coin.id)
+                ? {
+                    ...coin,
+                    category: values.category ?? coin.category,
+                    note: values.note,
+                    tags: values.tags,
+                  }
+                : coin,
+            ),
+          },
+        };
+        persist(STORAGE_KEYS.records, next);
+        return next;
+      });
+    },
+    [settings],
+  );
+
   const updateSettings = useCallback((nextSettings: Settings) => {
     setSettings(nextSettings);
     persist(STORAGE_KEYS.settings, nextSettings);
@@ -184,6 +213,7 @@ export function TimeCoinsProvider({ children }: { children: ReactNode }) {
       mission,
       getRecord,
       updateCoin,
+      updateCoins,
       updateSettings,
       updateMission,
       saveRole,
@@ -200,6 +230,7 @@ export function TimeCoinsProvider({ children }: { children: ReactNode }) {
       mission,
       getRecord,
       updateCoin,
+      updateCoins,
       updateSettings,
       updateMission,
       saveRole,
