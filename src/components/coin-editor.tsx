@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CATEGORY_META } from "@/lib/constants";
 import { CoinCategory, TimeCoin } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useTimeCoins } from "@/hooks/use-time-coins";
 
 const categories = Object.keys(CATEGORY_META) as Exclude<
   CoinCategory,
@@ -30,20 +31,28 @@ export function CoinEditor({
   onOpenChange: (open: boolean) => void;
   onSave: (coin: TimeCoin) => void;
 }) {
+  const { settings } = useTimeCoins();
   const [category, setCategory] = useState<CoinCategory>("empty");
   const [note, setNote] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (coin) {
       setCategory(coin.category);
       setNote(coin.note ?? "");
+      setTags(coin.tags ?? []);
     }
   }, [coin]);
 
   if (!coin) return null;
 
   const save = () => {
-    onSave({ ...coin, category, note: note.trim() || undefined });
+    onSave({
+      ...coin,
+      category,
+      note: note.trim() || undefined,
+      tags: tags.length ? tags : undefined,
+    });
     onOpenChange(false);
   };
 
@@ -89,7 +98,39 @@ export function CoinEditor({
           })}
         </div>
 
-        <label className="mt-5 block">
+        {settings.noteTags.length > 0 && (
+          <div className="mt-5">
+            <span className="mb-2 block text-sm font-semibold">快捷标签</span>
+            <div className="flex flex-wrap gap-2">
+              {settings.noteTags.map((tag) => {
+                const selected = tags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() =>
+                      setTags((current) =>
+                        current.includes(tag)
+                          ? current.filter((item) => item !== tag)
+                          : [...current, tag],
+                      )
+                    }
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                      selected
+                        ? "border-stone-700 bg-foreground text-white"
+                        : "border-stone-200 bg-white text-stone-600",
+                    )}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <label className="mt-4 block">
           <span className="mb-2 block text-sm font-semibold">
             一句话备注 <span className="font-normal text-stone-400">可选</span>
           </span>
@@ -108,6 +149,7 @@ export function CoinEditor({
             onClick={() => {
               setCategory("empty");
               setNote("");
+              setTags([]);
             }}
           >
             清空

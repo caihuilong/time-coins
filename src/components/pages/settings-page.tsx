@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, Smartphone, TimerReset } from "lucide-react";
+import { Clock, Plus, Smartphone, Tags, TimerReset, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ export function SettingsPage() {
   const { settings, updateSettings } = useTimeCoins();
   const [draft, setDraft] = useState<Settings>(settings);
   const [saved, setSaved] = useState(false);
+  const [newTag, setNewTag] = useState("");
 
   useEffect(() => setDraft(settings), [settings]);
 
@@ -19,6 +20,13 @@ export function SettingsPage() {
     updateSettings(draft);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1600);
+  };
+
+  const addTag = () => {
+    const tag = newTag.trim();
+    if (!tag || draft.noteTags.includes(tag)) return;
+    setDraft({ ...draft, noteTags: [...draft.noteTags, tag] });
+    setNewTag("");
   };
 
   return (
@@ -88,6 +96,69 @@ export function SettingsPage() {
         </label>
         <Button className="mt-5 w-full" onClick={save}>
           {saved ? "已保存" : "保存设置"}
+        </Button>
+      </Card>
+
+      <Card className="mt-4">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="rounded-2xl bg-play/30 p-3">
+            <Tags className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-bold">一句话备注快捷标签</h2>
+            <p className="text-xs text-stone-500">记录金币时可以直接点选</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {draft.noteTags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 rounded-full bg-stone-100 py-1.5 pl-3 pr-1.5 text-xs font-medium text-stone-700"
+            >
+              {tag}
+              <button
+                type="button"
+                aria-label={`删除标签 ${tag}`}
+                onClick={() =>
+                  setDraft({
+                    ...draft,
+                    noteTags: draft.noteTags.filter((item) => item !== tag),
+                  })
+                }
+                className="rounded-full p-1 text-stone-400 hover:bg-white hover:text-stone-700"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-4 flex gap-2">
+          <Input
+            value={newTag}
+            maxLength={12}
+            placeholder="新增标签"
+            onChange={(event) => setNewTag(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                addTag();
+              }
+            }}
+          />
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={addTag}
+            disabled={!newTag.trim() || draft.noteTags.includes(newTag.trim())}
+            aria-label="新增标签"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        <Button className="mt-4 w-full" onClick={save}>
+          {saved ? "已保存" : "保存快捷标签"}
         </Button>
       </Card>
 

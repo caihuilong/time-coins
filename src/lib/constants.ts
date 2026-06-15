@@ -4,6 +4,7 @@ export const DEFAULT_SETTINGS: Settings = {
   wakeTime: "06:30",
   sleepTime: "23:30",
   coinDuration: 30,
+  noteTags: ["深度工作", "开会", "通勤", "家务", "运动", "阅读", "刷手机"],
 };
 
 export const CATEGORY_META: Record<

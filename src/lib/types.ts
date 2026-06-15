@@ -12,6 +12,7 @@ export type TimeCoin = {
   endTime: string;
   category: CoinCategory;
   note?: string;
+  tags?: string[];
 };
 
 export type DayRecord = {
@@ -49,4 +50,5 @@ export type Settings = {
   wakeTime: string;
   sleepTime: string;
   coinDuration: number;
+  noteTags: string[];
 };

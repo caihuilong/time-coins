@@ -66,7 +66,15 @@ export function TimeCoinsProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    const storedSettings = readStorage(STORAGE_KEYS.settings, DEFAULT_SETTINGS);
+    const savedSettings = readStorage<Partial<Settings>>(
+      STORAGE_KEYS.settings,
+      DEFAULT_SETTINGS,
+    );
+    const storedSettings = {
+      ...DEFAULT_SETTINGS,
+      ...savedSettings,
+      noteTags: savedSettings.noteTags ?? DEFAULT_SETTINGS.noteTags,
+    };
     const storedRecords = readStorage<Records>(STORAGE_KEYS.records, {});
     const today = dateKey(new Date());
 
