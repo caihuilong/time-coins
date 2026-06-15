@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: #eee9df;
+  overscroll-behavior-y: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: #eee9df;
+  color: #2f2f2f;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+input[type="date"],
+input[type="time"] {
+  min-width: 0;
+}
+
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+}
